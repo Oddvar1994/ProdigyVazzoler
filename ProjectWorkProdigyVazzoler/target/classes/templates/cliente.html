@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Clienti</title>
+<link rel="stylesheet" href="bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="styles.css"/>
+<script src="bootstrap.bundle.min.js"></script>
+<script src="jquery-3.6.0.js"></script>
+
+<script>
+var listaOfferte= new Array();
+
+$(document).ready(function(){
+	getListaOfferte();
+	lista();
+});
+
+function getListaOfferte(){
+	 $.get("http://localhost:8090/listaofferte",
+	 function(data, status){
+	 var cnt = data.length;
+	 
+	 console.log('COUNT = ' + cnt);
+		
+    for(let i=0; i<cnt; i++) {
+   	listaOfferte.push(data[i]);	 
+    }    
+});
+}
+
+function showAlert(cliente){
+	var modal = "<div id='id01' class='modal'>" +
+		 "<form class='modal-content' action='/action_page.php'>"+
+		   "<div class='container'>" +
+		     "<h1>Sei sicuro di eliminare il cliente " + cliente.idCliente +"?</h1>" +
+		     "<div class='clearfix'>" +
+		      "<button type='button' onclick='document.getElementById(\"id01\").style.display=\"none\"' class='cancelbtn'>Annulla</button>" +
+		      "<button type='button' onclick='elimina(" + JSON.stringify(cliente) + ")' class='deletebtn'>Elimina</button>" +
+		     "</div>" +
+		   "</div>" +
+		 "</form>" +
+		"</div>";
+		
+	$("#id01").remove();	
+	$("body").append(modal);
+	$("#id01").css({ display: "block" });
+}
+
+function lista(){
+	 $("body").empty();
+	 $.get("http://localhost:8090/listaclienti",
+ 	 function(data, status){
+     var cnt = data.length;
+     var tr= "";
+      
+     var table = "<div id='malin'>"
+    	+ "<div class='row'>"
+ 		+ "<div class='col-4'></div>"
+ 		+ "<div class='col-4 text-center h2'>" + "Clienti" + "</div>"
+ 		+ "<div class='col-2'></div>"
+ 		+ "<div class='col-2 text-center'><br />" 
+ 		+ "<button class='btn btn-success btn-sm' onclick='inserimento()'><i class='fa fa-plus'></i> inserisci</button>"
+ 		+ "</div> </div> <div>"
+ 		+ "<table class='table table-responsive'>" + "<thead>" + "<tr>"
+ 		+ "<th>Id cliente</th>"
+ 		+ "<th>Nome</th>"
+ 		+ "<th>Cognome</th>"
+ 		+ "<th>Email</th>"
+ 		+ "<th>Numero di telefono</th>"
+ 		+ "<th>Offerta</th>" + "<th></th>"
+ 		+ "<th></th>" + "</tr>" + "</thead>"
+ 		+ "<tbody id='tbody'>"
+ 		+ "</tbody>" + "</table><br/>"
+ 		+ "<a href='/'>Menù principale</a>" + "</div>"
+ 		+ "</div>";
+ 		
+ 		console.log('COUNT = ' + cnt);
+		$("body").append(table);
+		
+        for(let i=0; i<cnt; i++) {
+
+         var idCliente = data[i].idCliente;
+         var nome = data[i].nome;
+         var cognome = data[i].cognome;
+         var email = data[i].email;
+         var numeroTelefono = data[i].numeroTelefono;
+         var descrizione = data[i].descrizione;
+         
+
+         tr = tr + 
+         "<tr><td>"+
+         idCliente+
+         "</td><td>"+
+         nome+
+         "</td><td>"+
+         cognome+
+         "</td><td>"+
+         email+
+         "</td><td>"+
+         numeroTelefono+
+         "</td><td>"+
+         descrizione+
+         "</td><td><button class='btn btn-primary' onclick='modifica("+
+         JSON.stringify(data[i]) +")'><i class='fa fa-edit'></i> modifica</button> </td>"+
+ 		 "</td><td><button class='btn btn-danger' onclick='showAlert(" + JSON.stringify(data[i]) + ");" +
+ 		 "'><i class='fa fa-trash'></i> elimina</button> </td></tr>";
+       }
+         $("#tbody").append(tr);
+     });
+
+}
+
+function inserimento() {		
+	 $("body").empty();
+
+	 var optionOfferte= "<option value=''>scegli...</option>";
+	 var cnt = listaOfferte.length;
+	 for(var i=0; i<cnt; i++){
+		optionOfferte = optionOfferte + "<option value='"+ listaOfferte[i].idOfferta +"'>"+listaOfferte[i].descrizione+"</option>";
+	 }
+	 
+	var form = "<div id='malin'>"
+	+ "<div class='text-center h2'>Inserisci cliente </div>"
+	+ "<div class='row'>"
+	+ "<div class='col-6'>"
+	+ "<table class='table text-center'>"
+	+ "<tr><th>Nome</th><td>"
+	+ "<input type='text' id='nome' name='nome' value=''>" 
+	+ "</td></tr>"
+	+ "<tr><th>Cognome</th><td>"
+	+ "<input type='text' id='cognome' name='cognome' value=''>"
+	+ "</td></tr>"
+	+ "<tr><th>Email</th><td>"
+	+ "<input type='text' id='email' name='email' value=''>"
+	+ "</td></tr>"
+	+ "<tr><th>Numero di telefono</th><td>"
+	+ "<input type='text' id='numeroTelefono' name='numeroTelefono' value=''>"
+	+ "</td></tr>"
+	+ "<tr><th>Offerta</th><td>"
+	+ "<select name='descrizione' id='descrizione'>"
+	+ optionOfferte
+	+ "</select>"
+	+ "</td></tr>"
+	+ "</table>"
+	+ "</div>"
+	+ "</div>"
+	+ "<div class='text-center'>"
+	+ "<button class='btn btn-primary' onclick='salvaInserimento()'><i class='fa fa-plus'></i> inserisci</button> &nbsp;"
+	+ "<button class='btn btn-secondary' onclick='lista()'><i class='fa fa-close'></i> annulla</button>"
+	+ "</div>"
+	+ "</div>";
+
+	$("body").append(form);
+	
+}
+
+function salvaInserimento(){
+	
+	var dataDaSalvare = "{"
+	    + "\"nome\":" + "\"" + $("#nome").val() + "\","
+	    + "\"cognome\":" + "\"" + $("#cognome").val() + "\","
+	    + "\"email\":" + "\"" + $("#email").val() + "\","
+	    + "\"numeroTelefono\":" + "\"" + $("#numeroTelefono").val() + "\","
+	    + "\"idOfferta\":" + "\"" + $("#descrizione").val() + "\""
+	 +"}";
+
+//alert(dataDaSalvare);
+	$.ajax({
+    type: "POST",
+    url: "http://localhost:8090/nuovocliente",
+    contentType: "application/json",
+    data: dataDaSalvare, // serializes the form's elements.
+    success: function(data)
+    {
+      // alert(data); // show response from the php script.
+      lista();
+    }
+});
+}
+
+function modifica(cliente) {		
+	$("body").empty();
+	
+	var optionOfferte= "<option value=''>scegli...</option>";
+	 var cnt = listaOfferte.length;
+	 for(var i=0; i<cnt; i++){
+		 if(cliente.idOfferta  == listaOfferte[i].idOfferta){
+			 optionOfferte = optionOfferte + "<option value='"+ listaOfferte[i].idOfferta +"' selected>"+listaOfferte[i].descrizione+"</option>";			 
+		 }else{
+			 optionOfferte = optionOfferte + "<option value='"+ listaOfferte[i].idOfferta +"'>"+listaOfferte[i].descrizione+"</option>";
+		 }
+	 }
+
+	var form ="<div id='malin'>" 
+			+ "<div class='text-center h2'>Modifica cliente " + cliente.idCliente + "</div>"
+			+ "<div>"
+			+ "<table class='table text-center'>"
+			+ "<tr><th>Nome</th><td>"
+			+ "<input type='text' id='nome' name='nome' value='" + cliente.nome + "'>" 
+			+ "</td></tr>"
+			+ "<tr><th>Cognome</th><td>"
+			+ "<input type='text' id='cognome' name='cognome' value='" + cliente.cognome + "'>"
+			+ "</td></tr>"
+			+ "<tr><th>Email</th><td>"
+			+ "<input type='text' id='email' name='email' value='" + cliente.email + "'>"
+			+ "</td></tr>"
+			+ "<tr><th>Numero di telefono</th><td>"
+			+ "<input type='text' id='numeroTelefono' name='numeroTelefono' value='" + cliente.numeroTelefono + "'>"
+			+ "</td></tr>"
+			+ "<tr><th>Offerta</th><td>"
+			+ "<select name='descrizione' id='descrizione'>"
+			+ optionOfferte
+			+ "</select>"
+			+ "</td></tr>"
+			+ "</table><br/>"
+			+ "</div> <div class='text-center'>"
+			+ "<button class='btn btn-primary' onclick='modificaCliente(" + cliente.idCliente + ")'><i class='fa fa-edit'></i> conferma</button> &nbsp;"
+			+ "<button class='btn btn-secondary' onclick='lista()'><i class='fa fa-close'></i> annulla</button>"
+			+ "</div>"
+			+ "</div>";
+
+	$("body").append(form);
+	
+}
+
+	function modificaCliente(idCliente) {
+	
+	var dataDaModificare = "{"
+					    + "\"nome\":" + "\"" + $("#nome").val() + "\","
+					    + "\"cognome\":" + "\"" + $("#cognome").val() + "\","
+					    + "\"email\":" + "\"" + $("#email").val() + "\","
+					    + "\"numeroTelefono\":" + "\"" + $("#numeroTelefono").val() + "\","
+					    + "\"idOfferta\":" + "\"" + $("#descrizione").val() + "\""
+					 +"}";
+		
+	//alert(dataDaModificare);
+	
+	$.ajax({
+        type: "PUT",
+        url: "http://localhost:8090/modificacliente/" + idCliente,
+        contentType: "application/json",
+        data: dataDaModificare, // serializes the form's elements.
+        success: function(data)
+        {
+          // alert(data); // show response from the php script.
+          lista();
+        }
+    });
+	
+}
+
+function elimina(cliente) {
+	
+	$.ajax({
+		type : "DELETE",
+		url : "http://localhost:8090/cancellacliente/" + cliente.idCliente,
+		contentType : "application/json",
+		success : function(data) {
+			// alert(data); // show response from the php script.
+			lista();
+		}
+	});
+}
+
+</script>
+
+</head>
+<body id="mainBody">
+	 
+
+</body>
+</html>

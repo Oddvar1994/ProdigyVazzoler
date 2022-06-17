@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Clienti</title>
+<link rel="stylesheet" href="bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="styles.css"/>
+<script src="bootstrap.bundle.min.js"></script>
+<script src="jquery-3.6.0.js"></script>
+
+<script>
+$(document).ready(function(){
+	lista();
+});
+
+function showAlert(offerta){
+	var modal = "<div id='id01' class='modal'>" +
+		 "<form class='modal-content' action='/action_page.php'>"+
+		   "<div class='container'>" +
+		     "<h1>Sei sicuro di eliminare l'offerta " + offerta.idOfferta +"?</h1>" +
+		     "<div class='clearfix'>" +
+		      "<button type='button' onclick='document.getElementById(\"id01\").style.display=\"none\"' class='cancelbtn'>Annulla</button>" +
+		      "<button type='button' onclick='elimina(" + JSON.stringify(offerta) + ")' class='deletebtn'>Elimina</button>" +
+		     "</div>" +
+		   "</div>" +
+		 "</form>" +
+		"</div>";
+		
+	$("#id01").remove();	
+	$("body").append(modal);
+	$("#id01").css({ display: "block" });
+}
+
+function lista(){
+	 $("body").empty();
+	 $.get("http://localhost:8090/listaofferte",
+ 	 function(data, status){
+     var cnt = data.length;
+     var tr= "";
+      
+     var table = "<div id='malin'>"
+    	+ "<div class='row'>"
+ 		+ "<div class='col-4'></div>"
+ 		+ "<div class='col-4 text-center h2'>" + "Offerte" + "</div>"
+ 		+ "<div class='col-2'></div>"
+ 		+ "<div class='col-2 text-center'><br />" 
+ 		+ "<button class='btn btn-success btn-sm' onclick='inserimento()'><i class='fa fa-plus'></i> inserisci</button>"
+ 		+ "</div> </div> <div>"
+ 		+ "<table class='table table-responsive'>" + "<thead>" + "<tr>"
+ 		+ "<th>Id Offerta</th>"
+ 		+ "<th>Descrizione</th>" + "<th></th>"
+ 		+ "<th></th>" + "</tr>" + "</thead>"
+ 		+ "<tbody id='tbody'>"
+ 		+ "</tbody>" + "</table><br/>"
+ 		+ "<a href='/'>Menù principale</a>" + "</div>"
+ 		+ "</div>";
+ 		
+ 		console.log('COUNT = ' + cnt);
+		$("body").append(table);
+		
+        for(let i=0; i<cnt; i++) {
+
+         var idOfferta = data[i].idOfferta;
+         var descrizione = data[i].descrizione;
+         
+         tr = tr + 
+         "<tr><td>"+
+         idOfferta+
+         "</td><td>"+
+         descrizione+
+         "</td><td><button class='btn btn-primary' onclick='modifica("+
+         JSON.stringify(data[i]) +")'><i class='fa fa-edit'></i> modifica</button> </td>"+
+ 		 "</td><td><button class='btn btn-danger' onclick='showAlert(" + JSON.stringify(data[i]) + ");" +
+ 		 "'><i class='fa fa-trash'></i> elimina</button> </td></tr>";
+       }
+         $("#tbody").append(tr);
+     });
+
+}
+
+function inserimento() {		
+	 $("body").empty();
+ 
+	var form = "<div id='malin'>"
+	+ "<div class='text-center h2'>Inserisci offerta </div>"
+	+ "<div class='row'>"
+	+ "<div class='col-6'>"
+	+ "<table class='table text-center'>"
+	+ "<tr><th>Offerta</th><td>"
+	+ "<input type='text' id='descrizione' name='descrizione' value=''>" 
+	+ "</td></tr>"
+	+ "</table>"
+	+ "</div>"
+	+ "</div>"
+	+ "<div class='text-center'>"
+	+ "<button class='btn btn-primary' onclick='salvaInserimento()'><i class='fa fa-plus'></i> inserisci</button> &nbsp;"
+	+ "<button class='btn btn-secondary' onclick='lista()'><i class='fa fa-close'></i> annulla</button>"
+	+ "</div>"
+	+ "</div>";
+
+	$("body").append(form);
+	
+}
+
+function salvaInserimento(){
+	
+	var dataDaSalvare = "{"
+	    + "\"descrizione\":" + "\"" + $("#descrizione").val() + "\""
+	 +"}";
+
+//alert(dataDaSalvare);
+	$.ajax({
+    type: "POST",
+    url: "http://localhost:8090/nuovaofferta",
+    contentType: "application/json",
+    data: dataDaSalvare, // serializes the form's elements.
+    success: function(data)
+    {
+      // alert(data); // show response from the php script.
+      lista();
+    }
+});
+}
+
+function modifica(offerta) {		
+	$("body").empty();
+
+	var form ="<div id='malin'>" 
+			+ "<div class='text-center h2'>Modifica offerta " + offerta.idOfferta + "</div>"
+			+ "<div>"
+			+ "<table class='table text-center'>"
+			+ "<tr><th>Offerta</th><td>"
+			+ "<input type='text' id='descrizione' name='descrizione' value=''>" 
+			+ "</td></tr>"
+			+ "</table><br/>"
+			+ "</div> <div class='text-center'>"
+			+ "<button class='btn btn-primary' onclick='modificaOfferta(" + offerta.idOfferta + ")'><i class='fa fa-edit'></i> conferma</button> &nbsp;"
+			+ "<button class='btn btn-secondary' onclick='lista()'><i class='fa fa-close'></i> annulla</button>"
+			+ "</div>"
+			+ "</div>";
+
+	$("body").append(form);
+	
+}
+
+	function modificaOfferta(idOfferta) {
+	
+	var dataDaModificare = "{"
+					    + "\"descrizione\":" + "\"" + $("#descrizione").val() + "\""
+					 +"}";
+		
+	//alert(dataDaModificare);
+	
+	$.ajax({
+        type: "PUT",
+        url: "http://localhost:8090/modificaofferta/" + idOfferta,
+        contentType: "application/json",
+        data: dataDaModificare, // serializes the form's elements.
+        success: function(data)
+        {
+          // alert(data); // show response from the php script.
+          lista();
+        }
+    });
+	
+}
+
+function elimina(offerta) {
+	
+	$.ajax({
+		type : "DELETE",
+		url : "http://localhost:8090/cancellaofferta/" + offerta.idOfferta,
+		contentType : "application/json",
+		success : function(data) {
+			// alert(data); // show response from the php script.
+			lista();
+		}
+	});
+}
+
+</script>
+
+</head>
+<body id="mainBody">
+	 
+
+</body>
+</html>
